@@ -64,6 +64,13 @@ function App() {
   const [confirmModal, setConfirmModal] = useState<{title: string, message: string, onConfirm: () => void} | null>(null);
   const [promptModal, setPromptModal] = useState<{title: string, message: string, defaultValue: string, onSubmit: (val: string) => void} | null>(null);
   
+  const [isIframe, setIsIframe] = useState(false);
+  const [hasGyro, setHasGyro] = useState(false);
+  const [hasMag, setHasMag] = useState(false);
+  const [hasMmWave, setHasMmWave] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const bridgeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const simulationInterval = useRef<NodeJS.Timeout | null>(null);
   const playbackInterval = useRef<NodeJS.Timeout | null>(null);
   const uiUpdateInterval = useRef<NodeJS.Timeout | null>(null);
@@ -233,9 +240,7 @@ function App() {
       stage, 
       recoveryRate: Number.isNaN(recoveryRate) ? 0 : recoveryRate 
     };
-  }, [data, recordedSessions, connectionType]);
-
-  const [isIframe, setIsIframe] = useState(false);
+  }, [data, recordedSessions, connectionType, hasMmWave]);
 
   // Screen Wake Lock to keep mobile monitoring continuous
   useEffect(() => {
@@ -298,10 +303,6 @@ function App() {
     }
   }, []);
 
-  const [hasGyro, setHasGyro] = useState(false);
-  const [hasMag, setHasMag] = useState(false);
-  const [hasMmWave, setHasMmWave] = useState(false);
-
   const handleData = useCallback((newData: SensorData) => {
     uiBuffer.current.push(newData);
     
@@ -345,9 +346,6 @@ function App() {
       setConnectionType(null);
     });
   }, [handleData]);
-
-  const wsRef = useRef<WebSocket | null>(null);
-  const bridgeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup connections only on component unmount
   useEffect(() => {
