@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    function isValidSession(data) {
+      return data.keys().hasAll(['id', 'userId', 'timestamp', 'duration', 'severity', 'stage', 'rms', 'frequency', 'data']) && 
+             data.keys().size() == 9 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.timestamp is number &&
+             data.duration is number &&
+             data.severity is string && data.severity.size() <= 100 &&
+             data.stage is string && data.stage.size() <= 100 &&
+             data.rms is number &&
+             data.frequency is number &&
+             data.data is string && data.data.size() <= 1048576; // max 1MB string
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && 
+                    isValidId(sessionId) && 
+                    isValidSession(incoming()) && 
+                    incoming().id == sessionId;
+                    
+      allow delete: if isSignedIn() && 
+                    existing().userId == request.auth.uid;
+                    
+      allow update: if false; // Sessions are immutable
+    }
+  }
+}

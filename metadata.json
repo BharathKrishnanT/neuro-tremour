@@ -1,0 +1,9 @@
+{
+  "name": "NeuroTremor MMwave",
+  "description": "Real-time analysis dashboard for Parkinson\u0027s tremor assessment using IMU and FSR sensor data (supports external pen and mobile sensors).",
+  "requestFramePermissions": [
+    "accelerometer",
+    "gyroscope",
+    "screen-wake-lock"
+  ]
+}

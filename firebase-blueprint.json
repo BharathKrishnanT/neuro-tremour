@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "Session": {
+      "title": "Session",
+      "description": "A recorded tremor assessment session.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the session."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who recorded the session."
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "The start time of the session (Unix timestamp)."
+        },
+        "duration": {
+          "type": "number",
+          "description": "The duration of the session in milliseconds."
+        },
+        "severity": {
+          "type": "string",
+          "description": "The calculated severity level (e.g., Mild, Moderate, Severe)."
+        },
+        "stage": {
+          "type": "string",
+          "description": "The calculated Parkinson's stage."
+        },
+        "rms": {
+          "type": "number",
+          "description": "The Root Mean Square value of the tremor."
+        },
+        "frequency": {
+          "type": "number",
+          "description": "The dominant frequency of the tremor in Hz."
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON stringified array of SensorData points."
+        }
+      },
+      "required": ["id", "userId", "timestamp", "duration", "severity", "stage", "rms", "frequency", "data"]
+    }
+  },
+  "firestore": {
+    "/sessions/{sessionId}": {
+      "schema": {
+        "$ref": "#/entities/Session"
+      },
+      "description": "Stores recorded tremor assessment sessions for users."
+    }
+  }
+}
