@@ -1,45 +1,37 @@
-import asyncio
-import websockets
-import json
+from flask import Flask, jsonify
+from flask_cors import CORS
 import lgpio
 import time
+
+app = Flask(__name__)
+CORS(app) # Enable CORS for all routes
 
 # Pin Definitions (BCM numbering)
 OT1_MOVE = 4
 OT2_STAY = 17
 
-async def sensor_server(websocket):
-    print("Browser Dashboard Connected via WebSocket!")
-    h = lgpio.gpiochip_open(0)
-    lgpio.gpio_claim_input(h, OT1_MOVE)
-    lgpio.gpio_claim_input(h, OT2_STAY)
-    
-    try:
-        while True:
-            moving = lgpio.gpio_read(h, OT1_MOVE)
-            static = lgpio.gpio_read(h, OT2_STAY)
-            
-            # Send mapped JSON to the web app
-            data = {
-                "type": "gpio",
-                "moving": bool(moving),
-                "static": bool(static),
-                "timestamp": int(time.time() * 1000)
-            }
-            await websocket.send(json.dumps(data))
-            await asyncio.sleep(0.05) # 20Hz update rate
-            
-    except websockets.exceptions.ConnectionClosed:
-        print("Browser disconnected.")
-    finally:
-        lgpio.gpiochip_close(h)
+# Initialize GPIO
+h = lgpio.gpiochip_open(0)
+lgpio.gpio_claim_input(h, OT1_MOVE)
+lgpio.gpio_claim_input(h, OT2_STAY)
 
-async def main():
-    print("--- J.A.R.V.I.S. Web Bridge Online ---")
-    print("Starting WebSocket server on ws://localhost:8080 ...")
-    print("Keep this script running while using the web dashboard.")
-    async with websockets.serve(sensor_server, "localhost", 8080):
-        await asyncio.Future()  # run forever
+@app.route('/')
+def get_sensor_data():
+    try:
+        moving = lgpio.gpio_read(h, OT1_MOVE)
+        static = lgpio.gpio_read(h, OT2_STAY)
+        print(f"Reading: MOVE={moving}, STAY={static}", flush=True)
+        
+        return jsonify({
+            "type": "gpio",
+            "moving": bool(moving),
+            "static": bool(static),
+            "timestamp": int(time.time() * 1000)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    print("--- J.A.R.V.I.S. Web Bridge Online (HTTP Mode) ---")
+    print("Starting server on http://0.0.0.0:8080 ...")
+    app.run(host='0.0.0.0', port=8080)
