@@ -439,6 +439,9 @@ function App() {
             try {
               const res = await fetch(url);
               const data = await res.json();
+              if (data.error) {
+                 console.error("Pi Bridge returned error:", data.error);
+              }
               
               if (data && data.type === 'gpio') {
                 let stateValue = 0;
@@ -453,6 +456,8 @@ function App() {
                    stateValue = 2; phase = 1.0; amp = 60;
                 }
                 
+                if (Math.random() < 0.1) console.log("Pi Bridge Data:", data, "=> Mapped State:", stateValue);
+
                 handleData({
                    timestamp: data.timestamp,
                    ax: 0, ay: 0, az: 0, gx: 0, gy: 0, gz: 0, mx: 0, my: 0, mz: 0, fsr: 0,
