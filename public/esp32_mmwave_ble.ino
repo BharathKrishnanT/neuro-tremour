@@ -15,6 +15,8 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 // BLE Characteristic UUIDs
 #define SERVICE_UUID           "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -39,6 +41,8 @@ class MyServerCallbacks: public BLEServerCallbacks {
 };
 
 void setup() {
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  
   Serial.begin(115200); // For USB debugging / direct UART connection
 
   // Initialize Digital Pins with PULLDOWN to prevent floating values
@@ -118,11 +122,11 @@ void loop() {
     snprintf(buffer, sizeof(buffer), "P:%.2f,A:%d\n", phase, amp);
 
     // Also print out the RAW pin state so you can debug the sensor 
-    // Serial.print("OT1: ");
-    // Serial.print(ot1_state);
-    // Serial.print(" | OT2: ");
-    // Serial.print(ot2_state);
-    // Serial.print(" -> ");
+    Serial.print("OT1: ");
+    Serial.print(ot1_state);
+    Serial.print(" | OT2: ");
+    Serial.print(ot2_state);
+    Serial.print(" -> ");
 
     // Send to physical UART (for web UART connection)
     Serial.print(buffer);
