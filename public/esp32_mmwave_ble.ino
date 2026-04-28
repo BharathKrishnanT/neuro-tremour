@@ -43,9 +43,9 @@ class MyServerCallbacks: public BLEServerCallbacks {
 void setup() {
   Serial.begin(115200); // For USB debugging / direct UART connection
 
-  // Initialize Digital Pins
-  pinMode(MMWAVE_MOVE_PIN, INPUT);
-  pinMode(MMWAVE_STAY_PIN, INPUT); // If unused by your sensor, this will just float or be pulled (recommend pullup/pulldown if unused)
+  // Initialize Digital Pins with PULLDOWN to prevent floating HIGH values
+  pinMode(MMWAVE_MOVE_PIN, INPUT_PULLDOWN);
+  pinMode(MMWAVE_STAY_PIN, INPUT_PULLDOWN); // If unused by your sensor, this will stay LOW
 
   Serial.println("Starting BLE NeuroTremor_Node_C3 + MMWave (Digital Pins)");
 
