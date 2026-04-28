@@ -118,11 +118,11 @@ void loop() {
     snprintf(buffer, sizeof(buffer), "P:%.2f,A:%d\n", phase, amp);
 
     // Also print out the RAW pin state so you can debug the sensor 
-    Serial.print("OT1: ");
-    Serial.print(ot1_state);
-    Serial.print(" | OT2: ");
-    Serial.print(ot2_state);
-    Serial.print(" -> ");
+    // Serial.print("OT1: ");
+    // Serial.print(ot1_state);
+    // Serial.print(" | OT2: ");
+    // Serial.print(ot2_state);
+    // Serial.print(" -> ");
 
     // Send to physical UART (for web UART connection)
     Serial.print(buffer);
