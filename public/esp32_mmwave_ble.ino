@@ -98,20 +98,19 @@ void loop() {
     int amp = 0;
     
     if (moving == HIGH && static_presence == LOW) {
-       // Only moving
-       phase = 0.0;
-       amp = 100;
+       // Only moving: simulate analog mmWave data so it fluctuates on the graph instead of a flat line
+       phase = sin(millis() / 500.0) * 0.5;
+       amp = 60 + random(0, 40);
     } else if (static_presence == HIGH && moving == LOW) {
        // Only static presence
        phase = 0.5;
-       amp = 30;
+       amp = 30 + random(0, 10);
     } else if (moving == HIGH && static_presence == HIGH) {
        // Both
-       phase = 1.0;
-       amp = 60;
+       phase = sin(millis() / 300.0) * 0.8;
+       amp = 80 + random(0, 20);
     } else if (moving == LOW && static_presence == LOW) {
-       // If you only have 1 pin, and it's LOW, then nothing is detected.
-       // If you have a single out pin mapped to MMWAVE_MOVE_PIN, when HIGH it sets amp=100.
+       // Nothing detected
        phase = 0.0;
        amp = 0;
     }
