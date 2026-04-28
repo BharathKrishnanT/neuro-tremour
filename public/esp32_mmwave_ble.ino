@@ -2,13 +2,13 @@
 // PIN CONFIGURATION & WIRING
 // ==========================================
 // 
-// MMWave Sensor              <-->   ESP32 Board
+// MMWave Sensor (HLK-LD2420)  <-->   ESP32 Board
 // ------------------------          -------------------
-// VCC (3.3V or 5V)           --->   3.3V or VIN (check your sensor's power requirement!)
+// 3V3                        --->   3.3V (3V3)
 // GND                        --->   GND
-// OT1 (Output 1)             --->   GPIO 18
-// OT2 (Output 2)             --->   GPIO 19
-// TX/RX                      --->   (Not used for digital mode, leave disconnected or connect to 16/17)
+// OT1 (Presence Output)      --->   GPIO 18
+// RX                         --->   (Not used for digital mode)
+// OT2                        --->   GPIO 19
 // ==========================================
 
 #include <BLEDevice.h>
@@ -99,18 +99,11 @@ void loop() {
     float phase = 0.0;
     int amp = 0;
     
-    if (ot1_state == HIGH && ot2_state == LOW) {
-       // OT1 Only (Usually meaning 'moving' or 'presence')
-       phase = sin(millis() / 500.0) * 0.5;
-       amp = 60 + random(0, 40);
-    } else if (ot2_state == HIGH && ot1_state == LOW) {
-       // OT2 Only (Usually meaning 'static' or secondary presence)
-       phase = 0.5;
-       amp = 30 + random(0, 10);
-    } else if (ot1_state == HIGH && ot2_state == HIGH) {
-       // Both pins HIGH
-       phase = sin(millis() / 300.0) * 0.8;
-       amp = 80 + random(0, 20);
+    if (ot1_state == HIGH) {
+       // OT1 Only (Presence detected)
+       // We use an honest step mapping here. 100 = Presence, 0 = Empty.
+       phase = 0.0;
+       amp = 100;
     } else {
        // Nothing detected (LOW)
        phase = 0.0;
