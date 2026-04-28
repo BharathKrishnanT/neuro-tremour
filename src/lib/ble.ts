@@ -91,6 +91,29 @@ class BLEService {
            if (this.onDataCallback) this.onDataCallback(sensorData);
          }
       }
+
+      // Fallback for MMWave format: P:xxx,A:xxx
+      if (trimmed.includes('P:') && trimmed.includes('A:')) {
+         const parts = trimmed.split(',');
+         const data: Record<string, number> = {};
+         parts.forEach(p => {
+           const [key, val] = p.split(':');
+           if (key && val) data[key.trim()] = Number(val);
+         });
+         
+         if ('P' in data && 'A' in data) {
+           const sensorData: SensorData = {
+             timestamp: Date.now(),
+             ax: 0, ay: 0, az: 0,
+             gx: 0, gy: 0, gz: 0,
+             mx: 0, my: 0, mz: 0,
+             fsr: 0,
+             phase: Number(data.P) || 0,
+             amplitude: Number(data.A) || 0
+           };
+           if (this.onDataCallback) this.onDataCallback(sensorData);
+         }
+      }
     } catch (e) {
       // Ignore parse errors
     }
