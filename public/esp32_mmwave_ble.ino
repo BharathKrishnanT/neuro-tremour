@@ -4,13 +4,11 @@
 // 
 // MMWave Sensor              <-->   ESP32 Board
 // ------------------------          -------------------
-// VCC (3.3V)                 --->   3.3V (3V3)
+// VCC (3.3V or 5V)           --->   3.3V or VIN (check your sensor's power requirement!)
 // GND                        --->   GND
-// OUT / Move / OT1           --->   GPIO 18
-// Presence / Stay / OT2      --->   GPIO 19
-// 
-// If your sensor only has a single digital "OUT" pin, 
-// just connect it to GPIO 18 and ignore GPIO 19.
+// OT1 (Output 1)             --->   GPIO 18
+// OT2 (Output 2)             --->   GPIO 19
+// TX/RX                      --->   (Not used for digital mode, leave disconnected or connect to 16/17)
 // ==========================================
 
 #include <BLEDevice.h>
@@ -28,8 +26,8 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
 // Hardware Pins for MMWave Sensor Digital Outputs
-#define MMWAVE_MOVE_PIN 18
-#define MMWAVE_STAY_PIN 19
+#define MMWAVE_OT1_PIN 18
+#define MMWAVE_OT2_PIN 19
 
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
@@ -43,11 +41,11 @@ class MyServerCallbacks: public BLEServerCallbacks {
 void setup() {
   Serial.begin(115200); // For USB debugging / direct UART connection
 
-  // Initialize Digital Pins with PULLDOWN to prevent floating HIGH values
-  pinMode(MMWAVE_MOVE_PIN, INPUT_PULLDOWN);
-  pinMode(MMWAVE_STAY_PIN, INPUT_PULLDOWN); // If unused by your sensor, this will stay LOW
+  // Initialize Digital Pins with PULLDOWN to prevent floating values
+  pinMode(MMWAVE_OT1_PIN, INPUT_PULLDOWN);
+  pinMode(MMWAVE_OT2_PIN, INPUT_PULLDOWN);
 
-  Serial.println("Starting BLE NeuroTremor_Node_C3 + MMWave (Digital Pins)");
+  Serial.println("Starting BLE NeuroTremor_Node_C3 + MMWave (OT1 & OT2)");
 
   // Create the BLE Device
   BLEDevice::init("NeuroTremor_Node_C3");
@@ -85,32 +83,32 @@ void setup() {
 unsigned long lastSendTime = 0;
 
 void loop() {
-  // Send data at 20Hz (every 50ms)
-  if (millis() - lastSendTime > 50) {
+  // Send data at 10Hz (every 100ms)
+  if (millis() - lastSendTime > 100) {
     lastSendTime = millis();
     
     // Read digital states
-    int moving = digitalRead(MMWAVE_MOVE_PIN);
-    int static_presence = digitalRead(MMWAVE_STAY_PIN);
+    int ot1_state = digitalRead(MMWAVE_OT1_PIN);
+    int ot2_state = digitalRead(MMWAVE_OT2_PIN);
     
-    // Map states to Phase (P) and Amplitude (A) for the app dashboard
+    // Map state to Phase (P) and Amplitude (A) for the app dashboard
     float phase = 0.0;
     int amp = 0;
     
-    if (moving == HIGH && static_presence == LOW) {
-       // Only moving: simulate analog mmWave data so it fluctuates on the graph instead of a flat line
+    if (ot1_state == HIGH && ot2_state == LOW) {
+       // OT1 Only (Usually meaning 'moving' or 'presence')
        phase = sin(millis() / 500.0) * 0.5;
        amp = 60 + random(0, 40);
-    } else if (static_presence == HIGH && moving == LOW) {
-       // Only static presence
+    } else if (ot2_state == HIGH && ot1_state == LOW) {
+       // OT2 Only (Usually meaning 'static' or secondary presence)
        phase = 0.5;
        amp = 30 + random(0, 10);
-    } else if (moving == HIGH && static_presence == HIGH) {
-       // Both
+    } else if (ot1_state == HIGH && ot2_state == HIGH) {
+       // Both pins HIGH
        phase = sin(millis() / 300.0) * 0.8;
        amp = 80 + random(0, 20);
-    } else if (moving == LOW && static_presence == LOW) {
-       // Nothing detected
+    } else {
+       // Nothing detected (LOW)
        phase = 0.0;
        amp = 0;
     }
@@ -118,6 +116,13 @@ void loop() {
     // Format the simulated UART string that the app expects for MMWave: "P:xxx,A:xxx"
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "P:%.2f,A:%d\n", phase, amp);
+
+    // Also print out the RAW pin state so you can debug the sensor 
+    Serial.print("OT1: ");
+    Serial.print(ot1_state);
+    Serial.print(" | OT2: ");
+    Serial.print(ot2_state);
+    Serial.print(" -> ");
 
     // Send to physical UART (for web UART connection)
     Serial.print(buffer);
